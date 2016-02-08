@@ -67,7 +67,8 @@ public class HeapPage implements Page {
     */
     private int getNumTuples() {        
         // some code goes here
-        return 0;
+    	return (Database.getBufferPool().PAGE_SIZE * 8)/ (this.td.getSize() * 8+ 1);
+        //return 0;
 
     }
 
@@ -78,7 +79,13 @@ public class HeapPage implements Page {
     private int getHeaderSize() {        
         
         // some code goes here
-        return 0;
+    	int tmp = getNumTuples() / 8;
+    	if (tmp * 8 == getNumTuples())
+    	{
+    		return tmp;
+    	}
+    	else
+    		return tmp + 1;
                  
     }
     
@@ -112,7 +119,10 @@ public class HeapPage implements Page {
      */
     public HeapPageId getId() {
     // some code goes here
-    throw new UnsupportedOperationException("implement this");
+    if (this.pid != null)
+    	return this.pid;
+    else
+    	throw new UnsupportedOperationException("implement this");
     }
 
     /**
