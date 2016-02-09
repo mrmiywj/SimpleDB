@@ -292,7 +292,13 @@ public class HeapPage implements Page {
      */
     public int getNumEmptySlots() {
         // some code goes here
-        return 0;
+    	int res = 0;
+    	for (int i = 0; i < this.numSlots; ++i )
+    	{
+    		if (!this.isSlotUsed(i))
+    			++res;
+    	}
+        return res;
     }
 
     /**
@@ -300,7 +306,14 @@ public class HeapPage implements Page {
      */
     public boolean isSlotUsed(int i) {
         // some code goes here
-        return false;
+    	int index = i / 8;
+    	int offset = i % 8;
+    	int res = (header[index] >> offset) & 1;
+    	if (res == 1)
+    		return true;
+    	else
+    		return false;
+        //return false;
     }
 
     /**
@@ -317,7 +330,13 @@ public class HeapPage implements Page {
      */
     public Iterator<Tuple> iterator() {
         // some code goes here
-        return null;
+    	ArrayList<Tuple> tmp = new ArrayList<Tuple>();
+    	for (int i = 0; i < this.numSlots; ++i)
+    	{
+    		if (this.isSlotUsed(i))
+    			tmp.add(tuples[i]);
+    	}
+        return tmp.iterator();
     }
 
 }
