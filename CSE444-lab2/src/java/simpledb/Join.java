@@ -20,13 +20,21 @@ public class Join extends Operator {
      * @param child2
      *            Iterator for the right(inner) relation to join
      */
+    private JoinPredicate p;
+    private DbIterator[] children;
+    private ArrayList<Tuple> tuples = new ArrayList<Tuple>();
+    private Iterator<Tuple> it;
     public Join(JoinPredicate p, DbIterator child1, DbIterator child2) {
         // some code goes here
+    	this.p = p;
+    	children = new DbIterator[2];
+    	children[0] = child1;
+    	children[1] = child2;
     }
 
     public JoinPredicate getJoinPredicate() {
         // some code goes here
-        return null;
+        return p;
     }
 
     /**
@@ -36,7 +44,7 @@ public class Join extends Operator {
      * */
     public String getJoinField1Name() {
         // some code goes here
-        return null;
+        return children[0].getTupleDesc().getFieldName(p.getField1());
     }
 
     /**
@@ -46,7 +54,7 @@ public class Join extends Operator {
      * */
     public String getJoinField2Name() {
         // some code goes here
-        return null;
+        return children[1].getTupleDesc().getFieldName(p.getField2());
     }
 
     /**
@@ -55,20 +63,52 @@ public class Join extends Operator {
      */
     public TupleDesc getTupleDesc() {
         // some code goes here
-        return null;
+        return TupleDesc.merge(children[0].getTupleDesc(), children[1].getTupleDesc());
     }
 
     public void open() throws DbException, NoSuchElementException,
             TransactionAbortedException {
-        // some code goes here
+        super.open();
+        children[0].open();
+        children[1].open();
+        while(children[0].hasNext())
+        {
+        	Tuple t1 = children[0].next();
+        	while (children[1].hasNext())
+        	{
+        		Tuple t2 = children[1].next();
+        		if (p.filter(t1, t2))
+        		{
+        			int index = 0;
+        			Tuple newt = new Tuple(this.getTupleDesc());
+        			for (int i = 0; i < t1.getTupleDesc().numFields();i++)
+        			{
+        				newt.setField(index, t1.getField(i));
+        				++index;
+        			}
+        			for (int i = 0; i < t2.getTupleDesc().numFields();i++)
+        			{
+        				newt.setField(index, t2.getField(i));
+        				++index;
+        			}
+        			tuples.add(newt);
+        		}
+        	}
+        	children[1].rewind();
+        }
+        it = tuples.iterator();
     }
 
     public void close() {
         // some code goes here
+    	children[1].close();
+    	children[0].close();
+    	super.close();
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
         // some code goes here
+    	it = tuples.iterator();
     }
 
     /**
@@ -91,18 +131,23 @@ public class Join extends Operator {
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
         // some code goes here
-        return null;
+        if (it != null && it.hasNext())
+        	return it.next();
+        else
+        	return null;
     }
 
     @Override
     public DbIterator[] getChildren() {
         // some code goes here
-        return null;
+        return children;
     }
 
     @Override
     public void setChildren(DbIterator[] children) {
         // some code goes here
+    	this.children[0] = children[0];
+    	this.children[1] = children[1];
     }
 
 }
