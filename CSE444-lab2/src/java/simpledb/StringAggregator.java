@@ -1,5 +1,8 @@
 package simpledb;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
 /**
  * Knows how to compute some aggregate over a set of StringFields.
  */
@@ -15,9 +18,22 @@ public class StringAggregator implements Aggregator {
      * @param what aggregation operator to use -- only supports COUNT
      * @throws IllegalArgumentException if what != COUNT
      */
-
+    private int gbField;
+    private Type gbFieldType;
+    private int aField;
+    private Op what;
+    private boolean noGrouping = false;
+    private HashMap<Field, Integer> groups;
+    private String fieldName = "",groupFieldName = "";
     public StringAggregator(int gbfield, Type gbfieldtype, int afield, Op what) {
         // some code goes here
+    	this.gbField = gbfield;
+    	this.gbFieldType = gbfieldtype;
+    	this.aField = afield;
+    	this.what = what;
+    	if (gbfield == Aggregator.NO_GROUPING)
+    		this.noGrouping = true;
+    	groups = new HashMap<Field, Integer>();
     }
 
     /**
@@ -26,6 +42,52 @@ public class StringAggregator implements Aggregator {
      */
     public void mergeTupleIntoGroup(Tuple tup) {
         // some code goes here
+    	Field key;
+    	int curr;
+    	fieldName = tup.getTupleDesc().getFieldName(aField);
+    	if (noGrouping)
+    	{
+    		key = new IntField(Aggregator.NO_GROUPING);
+    	}
+    	else
+    	{
+    		key = tup.getField(gbField);
+    		groupFieldName = tup.getTupleDesc().getFieldName(gbField);
+    	}
+    	
+    	if (groups.containsKey(key))
+    	{
+    		curr = groups.get(key);
+    	}
+    	else
+    	{
+    		groups.put(key, 0);
+    	}
+    	curr = groups.get(key);
+    	++curr;
+    	groups.put(key, curr);
+    }
+    
+    public TupleDesc getTupleDesc() {
+    	Type[] typeAr;
+    	String[] stringAr;
+    	TupleDesc td;
+
+    	if (noGrouping) {
+    		typeAr = new Type[1];
+    		stringAr = new String[1];
+    		typeAr[0] = Type.INT_TYPE;
+    		stringAr[0] = fieldName;//don't actually need real field name
+    	} else {
+    		typeAr = new Type[2];
+    		stringAr = new String[2];
+    		typeAr[0] = gbFieldType;
+    		typeAr[1] = Type.INT_TYPE;
+    		stringAr[0] = groupFieldName;
+    		stringAr[1] = fieldName;
+    	}
+    	td = new TupleDesc(typeAr, stringAr);
+    	return td;
     }
 
     /**
@@ -37,8 +99,32 @@ public class StringAggregator implements Aggregator {
      *   aggregate specified in the constructor.
      */
     public DbIterator iterator() {
-        // some code goes here
-        throw new UnsupportedOperationException("please implement me for lab2");
+        ArrayList<Tuple> tuples = new ArrayList<Tuple>();
+        TupleDesc td = this.getTupleDesc();
+        
+        if (noGrouping)
+        {
+        	for (Field key:groups.keySet())
+        	{
+        		int value = groups.get(key);
+        		Tuple tp = new Tuple(td);
+        		tp.setField(0, new IntField(value));
+        		tuples.add(tp);
+        	}
+        }
+        else
+        {
+        	for (Field key:groups.keySet())
+        	{
+        		int value = groups.get(key);
+        		
+        		Tuple e = new Tuple(td);
+        		e.setField(0, key);
+        		e.setField(1, new IntField(value));
+        		tuples.add(e);
+        	}
+        }
+        return new TupleIterator(td, tuples);
     }
 
 }

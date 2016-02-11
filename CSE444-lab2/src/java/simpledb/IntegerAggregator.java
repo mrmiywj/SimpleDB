@@ -64,7 +64,7 @@ public class IntegerAggregator implements Aggregator {
     	int value;
     	int currentAggregateValue;
     	int currentCount;
-    	java.util.logging.Logger.getGlobal().info(tup.toString());
+    	//java.util.logging.Logger.getGlobal().info(tup.toString());
     	fieldName = tup.getTupleDesc().getFieldName(afield);
     	if (no_group)
     	{
