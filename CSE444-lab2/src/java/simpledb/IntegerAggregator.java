@@ -131,7 +131,7 @@ public class IntegerAggregator implements Aggregator {
     	if (what == Op.COUNT)
     	{
     		currentAggregateValue++;
-    		groups.put(key,value);
+    		groups.put(key,currentAggregateValue);
     	}
     	if (what == Op.AVG)
     	{

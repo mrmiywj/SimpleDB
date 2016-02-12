@@ -44,7 +44,7 @@ public class Aggregate extends Operator {
     	this.aOp = aop;
     	if (gfield == Aggregator.NO_GROUPING)
     		gbFieldType = null;
-    	else 
+    	else
     		gbFieldType = child.getTupleDesc().getFieldType(gfield);
     	Type t = child.getTupleDesc().getFieldType(afield);
     	if (gfield == -1)
