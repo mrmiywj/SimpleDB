@@ -1,6 +1,7 @@
 package simpledb;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -142,6 +143,29 @@ public class BufferPool {
         throws DbException, IOException, TransactionAbortedException {
         // some code goes here
         // not necessary for lab1
+    	try{
+    		ArrayList<Page> affectedPages;
+    		DbFile dbf = Database.getCatalog().getDatabaseFile(tableId);
+    		HeapFile hpf = (HeapFile)dbf;
+    		affectedPages = hpf.insertTuple(tid, t);
+    		for (Page p:affectedPages)
+    		{
+    			p.markDirty(true, tid);
+    			idToPage.put(p.getId(), p);
+    		}
+    	}
+    	catch (DbException e)
+    	{
+    		e.printStackTrace();
+    	}
+    	catch (IOException e)
+    	{
+    		e.printStackTrace();
+    	}
+    	catch (TransactionAbortedException e)
+    	{
+    		e.printStackTrace();
+    	}
     }
 
     /**

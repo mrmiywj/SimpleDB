@@ -33,11 +33,11 @@ public class HeapFileWriteTest extends TestUtil.CreateHeapFile {
         }
 
         // the next 512 additions should live on a new page
+        int count = 0;
         for (int i = 0; i < 504; ++i) {
             empty.insertTuple(tid, Utility.getHeapTuple(i, 2));
             assertEquals(2, empty.numPages());
         }
-
         // and one more, just for fun...
         empty.insertTuple(tid, Utility.getHeapTuple(0, 2));
         assertEquals(3, empty.numPages());
