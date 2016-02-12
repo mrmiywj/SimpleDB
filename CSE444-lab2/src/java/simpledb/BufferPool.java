@@ -34,6 +34,7 @@ public class BufferPool {
      */
     private int numPages;
     private ConcurrentHashMap<PageId, Page> idToPage;
+    private PageId recent;
     public BufferPool(int numPages) {
         // some code goes here
     	this.numPages = numPages;
@@ -70,14 +71,15 @@ public class BufferPool {
     	Page p = idToPage.get(pid);
     	if (p == null)
     	{
+    		p = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
     		if (idToPage.size() >= numPages)
-    			throw new DbException("Buffer overflow!");
-        	else
-        	{
-        		p = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
+    		{
+    			this.evictPage();
+    		}
+    		
         		idToPage.put(pid, p);
-        	}
     	}
+    	recent = pid;
         return p;
     }
 
@@ -235,6 +237,17 @@ public class BufferPool {
     private synchronized  void flushPage(PageId pid) throws IOException {
         // some code goes here
         // not necessary for lab1
+    	try{
+    		Page pg = idToPage.get(pid);
+    		int tableId = ((HeapPageId)pid).getTableId();
+    		HeapFile pgf = (HeapFile)Database.getCatalog().getDatabaseFile(tableId);
+    		pgf.writePage(pg);
+    		pg.markDirty(false, null);
+    	}
+    	catch (IOException e)
+    	{
+    		e.printStackTrace();
+    	}
     }
 
     /** Write all pages of the specified transaction to disk.
@@ -251,6 +264,20 @@ public class BufferPool {
     private synchronized  void evictPage() throws DbException {
         // some code goes here
         // not necessary for lab1
+    	PageId evicted;
+    	evicted = recent;
+    	if (evicted == null)
+    	{
+    		evicted = idToPage.keys().nextElement();
+    	}
+    	try{
+    		this.flushPage(evicted);
+    	}
+    	catch (IOException e)
+    	{
+    		e.printStackTrace();
+    	}
+    	idToPage.remove(evicted);
     }
 
 }
