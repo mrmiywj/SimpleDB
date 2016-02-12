@@ -184,6 +184,24 @@ public class BufferPool {
         throws DbException, IOException, TransactionAbortedException {
         // some code goes here
         // not necessary for lab1
+    	try{
+    		ArrayList<Page> affected;
+    		DbFile dbf = Database.getCatalog().getDatabaseFile(t.getRecordId().getPageId().getTableId());
+    		HeapFile hf = (HeapFile) dbf;
+    		affected = hf.deleteTuple(tid, t);
+    		for (Page p:affected)
+    		{
+    			p.markDirty(true, tid);
+    		}
+    	}
+    	catch(DbException e)
+    	{
+    		e.printStackTrace();
+    	}
+    	catch(TransactionAbortedException e)
+    	{
+    		e.printStackTrace();
+    	}
     }
 
     /**
@@ -194,7 +212,10 @@ public class BufferPool {
     public synchronized void flushAllPages() throws IOException {
         // some code goes here
         // not necessary for lab1
-
+    	for (PageId pid:idToPage.keySet())
+    	{
+    		flushPage(pid);
+    	}
     }
 
     /** Remove the specific page id from the buffer pool.
