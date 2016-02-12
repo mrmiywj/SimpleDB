@@ -12,6 +12,7 @@ public class Delete extends Operator {
     private TransactionId tid;
     private DbIterator child;
     private TupleDesc td;
+    private boolean fetched = false;
 
     /**
      * Constructor specifying the transaction that this delete belongs to as
@@ -70,6 +71,9 @@ public class Delete extends Operator {
        	Tuple t = new Tuple(td);
        	int count=0;
        	try{
+       		if (fetched)
+       			return null;
+       		fetched = true;
        		while(child.hasNext())
        		{
        			Tuple tup = child.next();
