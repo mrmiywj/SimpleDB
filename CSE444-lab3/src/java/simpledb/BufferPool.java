@@ -253,10 +253,7 @@ public class BufferPool {
     	{
     		e.printStackTrace();
     	}
-    	catch(TransactionAbortedException e)
-    	{
-    		e.printStackTrace();
-    	}
+
     }
 
     /**

@@ -81,10 +81,6 @@ public class Delete extends Operator {
        			count++;
        		}
        	}
-       	catch (TransactionAbortedException e)
-       	{
-       		e.printStackTrace();
-       	}
        	catch (DbException e)
        	{
        		e.printStackTrace();

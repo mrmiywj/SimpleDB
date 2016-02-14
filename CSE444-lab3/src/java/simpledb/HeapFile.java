@@ -171,10 +171,6 @@ public class HeapFile implements DbFile {
     	{
     		e.printStackTrace();
     	}
-    	catch (TransactionAbortedException e)
-    	{
-    		e.printStackTrace();
-    	}
     	return affected;
         //return null;
         // not necessary for lab1
