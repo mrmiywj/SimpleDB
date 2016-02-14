@@ -3,7 +3,12 @@ package simpledb;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+
 
 /**
  * BufferPool manages the reading and writing of pages into memory from
@@ -36,11 +41,13 @@ public class BufferPool {
     private int numPages;
     private ConcurrentHashMap<PageId, Page> idToPage;
     private PageId recent;
+    private HashMap<TransactionId,Set<PageId>> transactionsToDirtiedFlushedPages;
     public BufferPool(int numPages) {
         // some code goes here
     	this.numPages = numPages;
     	idToPage = new ConcurrentHashMap<PageId, Page>();
     	lockManager = LockManager.create();
+    	transactionsToDirtiedFlushedPages = new HashMap<TransactionId, Set<PageId>>();
     }
     
     public static int getPageSize() {
@@ -80,7 +87,7 @@ public class BufferPool {
     			this.evictPage();
     		}
     		
-        		idToPage.put(pid, p);
+        	idToPage.put(pid, p);
     	}
     	recent = pid;
         return p;
@@ -130,6 +137,37 @@ public class BufferPool {
         throws IOException {
         // some code goes here
         // not necessary for lab1|lab2
+    	if (!commit)
+    	{
+    		for (PageId pgid:idToPage.keySet())
+    		{
+    			Page pg = idToPage.get(pgid);
+    			if (tid.equals(pg.isDirty()))
+    			{
+    				idToPage.put(pgid, pg.getBeforeImage());
+    				pg.markDirty(false, null);
+    			}
+    		}
+    	}
+    	else
+    	{
+			Set<PageId> dirtiedFlushedPages = transactionsToDirtiedFlushedPages
+					.get(tid);
+			for (PageId pageId : idToPage.keySet()) {
+				Page page = idToPage.get(pageId);
+				if (tid.equals(page.isDirty())) {
+					flushPage(pageId);
+					// use current page contents as the before-image
+					// for the next transaction that modifies this page.
+					page.setBeforeImage();
+				} else if (dirtiedFlushedPages != null
+						&& dirtiedFlushedPages.contains(pageId)) {
+					page.setBeforeImage();
+				}
+			}
+    	}
+    	transactionsToDirtiedFlushedPages.remove(tid);
+    	lockManager.releasePages(tid);
     }
 
     /**
@@ -174,6 +212,16 @@ public class BufferPool {
     		e.printStackTrace();
     	}
     }
+    
+	private void addDirtiedFlushedPage(TransactionId dirtier, PageId pageId) {
+		if (transactionsToDirtiedFlushedPages.containsKey(dirtier)) {
+			transactionsToDirtiedFlushedPages.get(dirtier).add(pageId);
+		} else {
+			Set<PageId> dirtiedFlushedPages = new HashSet<PageId>();
+			dirtiedFlushedPages.add(pageId);
+			transactionsToDirtiedFlushedPages.put(dirtier, dirtiedFlushedPages);
+		}
+	}
 
     /**
      * Remove the specified tuple from the buffer pool.
@@ -244,6 +292,9 @@ public class BufferPool {
         // not necessary for lab1
     	try{
     		Page pg = idToPage.get(pid);
+    		TransactionId tid = pg.isDirty();
+    		addDirtiedFlushedPage(tid, pid);
+    		//Page pg = idToPage.get(pid);
     		int tableId = ((HeapPageId)pid).getTableId();
     		HeapFile pgf = (HeapFile)Database.getCatalog().getDatabaseFile(tableId);
     		pgf.writePage(pg);
@@ -271,18 +322,45 @@ public class BufferPool {
         // not necessary for lab1
     	PageId evicted;
     	evicted = recent;
-    	if (evicted == null)
-    	{
-    		evicted = idToPage.keys().nextElement();
-    	}
+   		PageId pid = null;
+   		if (evicted != null)
+   		{
+   			Page p = idToPage.get(evicted);
+   			if (p != null)
+   			{
+   				if (p.isDirty() == null)
+   				{
+   					try{
+   					this.flushPage(evicted);
+   					}
+   					catch (IOException e)
+   					{
+   						e.printStackTrace();
+   					}
+   					idToPage.remove(evicted);
+   					return;
+   				}
+   			}
+   		}
     	try{
-    		this.flushPage(evicted);
+    		//int count = 0;
+    		Iterator<PageId> it = idToPage.keySet().iterator();
+    		while (it.hasNext())
+    		{
+    			pid = it.next();
+    			Page tmp = idToPage.get(pid);
+    			if (tmp.isDirty() == null)
+    				break;
+    		}
+    		if (pid == null || idToPage.get(pid).isDirty() != null)
+    			throw new DbException("No free space!");
+    		this.flushPage(pid);
     	}
     	catch (IOException e)
     	{
     		e.printStackTrace();
     	}
-    	idToPage.remove(evicted);
+    	idToPage.remove(pid);
     }
 
 }
