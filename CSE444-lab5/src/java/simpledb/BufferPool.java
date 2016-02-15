@@ -278,6 +278,10 @@ public class BufferPool {
     public synchronized void discardPage(PageId pid) {
         // some code goes here
         // only necessary for lab5
+    	if (idToPage.containsKey(pid))
+    	{
+    		idToPage.remove(pid);
+    	}
     }
 
     /**

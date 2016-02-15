@@ -1,0 +1,99 @@
+Buildfile: /Users/ivan/Documents/SimpleDB/CSE444-lab5/build.xml
+
+compile:
+
+testcompile:
+
+runsystest:
+    [junit] Running simpledb.systemtest.LogTest
+    [junit] Testsuite: simpledb.systemtest.LogTest
+    [junit] Tests run: 10, Failures: 0, Errors: 7, Skipped: 0, Time elapsed: 0.229 sec
+    [junit] Tests run: 10, Failures: 0, Errors: 7, Skipped: 0, Time elapsed: 0.229 sec
+    [junit] 
+    [junit] Testcase: TestFlushAll took 0.073 sec
+    [junit] Testcase: TestCommitCrash took 0.015 sec
+    [junit] Testcase: TestAbort took 0.011 sec
+    [junit] 	Caused an ERROR
+    [junit] Unresolved compilation problems: 
+    [junit] 	The local variable lType may not have been initialized
+    [junit] 	The local variable transId may not have been initialized
+    [junit] 
+    [junit] java.lang.Error: Unresolved compilation problems: 
+    [junit] 	The local variable lType may not have been initialized
+    [junit] 	The local variable transId may not have been initialized
+    [junit] 
+    [junit] 	at simpledb.LogFile.rollback(LogFile.java:490)
+    [junit] 	at simpledb.LogFile.logAbort(LogFile.java:159)
+    [junit] 	at simpledb.systemtest.LogTest.abort(LogTest.java:78)
+    [junit] 	at simpledb.systemtest.LogTest.dontInsert(LogTest.java:99)
+    [junit] 	at simpledb.systemtest.LogTest.TestAbort(LogTest.java:202)
+    [junit] 
+    [junit] Testcase: TestAbortCommitInterleaved took 0.022 sec
+    [junit] 	Caused an ERROR
+    [junit] Unresolved compilation problems: 
+    [junit] 	The local variable lType may not have been initialized
+    [junit] 	The local variable transId may not have been initialized
+    [junit] 
+    [junit] java.lang.Error: Unresolved compilation problems: 
+    [junit] 	The local variable lType may not have been initialized
+    [junit] 	The local variable transId may not have been initialized
+    [junit] 
+    [junit] 	at simpledb.LogFile.rollback(LogFile.java:490)
+    [junit] 	at simpledb.LogFile.logAbort(LogFile.java:159)
+    [junit] 	at simpledb.systemtest.LogTest.abort(LogTest.java:78)
+    [junit] 	at simpledb.systemtest.LogTest.TestAbortCommitInterleaved(LogTest.java:233)
+    [junit] 
+    [junit] Testcase: TestAbortCrash took 0.009 sec
+    [junit] 	Caused an ERROR
+    [junit] Unresolved compilation problems: 
+    [junit] 	The local variable lType may not have been initialized
+    [junit] 	The local variable transId may not have been initialized
+    [junit] 
+    [junit] java.lang.Error: Unresolved compilation problems: 
+    [junit] 	The local variable lType may not have been initialized
+    [junit] 	The local variable transId may not have been initialized
+    [junit] 
+    [junit] 	at simpledb.LogFile.rollback(LogFile.java:490)
+    [junit] 	at simpledb.LogFile.logAbort(LogFile.java:159)
+    [junit] 	at simpledb.systemtest.LogTest.abort(LogTest.java:78)
+    [junit] 	at simpledb.systemtest.LogTest.dontInsert(LogTest.java:99)
+    [junit] 	at simpledb.systemtest.LogTest.TestAbortCrash(LogTest.java:251)
+    [junit] 
+    [junit] Testcase: TestCommitAbortCommitCrash took 0.013 sec
+    [junit] 	Caused an ERROR
+    [junit] Unresolved compilation problems: 
+    [junit] 	The local variable lType may not have been initialized
+    [junit] 	The local variable transId may not have been initialized
+    [junit] 
+    [junit] java.lang.Error: Unresolved compilation problems: 
+    [junit] 	The local variable lType may not have been initialized
+    [junit] 	The local variable transId may not have been initialized
+    [junit] 
+    [junit] 	at simpledb.LogFile.rollback(LogFile.java:490)
+    [junit] 	at simpledb.LogFile.logAbort(LogFile.java:159)
+    [junit] 	at simpledb.systemtest.LogTest.abort(LogTest.java:78)
+    [junit] 	at simpledb.systemtest.LogTest.dontInsert(LogTest.java:99)
+    [junit] 	at simpledb.systemtest.LogTest.TestCommitAbortCommitCrash(LogTest.java:287)
+    [junit] 
+    [junit] Testcase: TestOpenCrash took 0.008 sec
+    [junit] 	Caused an ERROR
+    [junit] LogTest: tuple present but shouldn't be
+    [junit] java.lang.RuntimeException: LogTest: tuple present but shouldn't be
+    [junit] 	at simpledb.systemtest.LogTest.look(LogTest.java:58)
+    [junit] 	at simpledb.systemtest.LogTest.TestOpenCrash(LogTest.java:336)
+    [junit] 
+    [junit] Testcase: TestOpenCommitOpenCrash took 0.016 sec
+    [junit] 	Caused an ERROR
+    [junit] LogTest: tuple present but shouldn't be
+    [junit] java.lang.RuntimeException: LogTest: tuple present but shouldn't be
+    [junit] 	at simpledb.systemtest.LogTest.look(LogTest.java:58)
+    [junit] 	at simpledb.systemtest.LogTest.TestOpenCommitOpenCrash(LogTest.java:373)
+    [junit] 
+    [junit] Testcase: TestOpenCommitCheckpointOpenCrash took 0.024 sec
+    [junit] 	Caused an ERROR
+    [junit] LogTest: tuple present but shouldn't be
+    [junit] java.lang.RuntimeException: LogTest: tuple present but shouldn't be
+    [junit] 	at simpledb.systemtest.LogTest.look(LogTest.java:58)
+    [junit] 	at simpledb.systemtest.LogTest.TestOpenCommitCheckpointOpenCrash(LogTest.java:417)
+    [junit] 
+    [junit] Testcase: PatchTest took 0.008 sec

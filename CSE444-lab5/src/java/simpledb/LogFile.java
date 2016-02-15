@@ -467,6 +467,50 @@ public class LogFile {
             synchronized(this) {
                 preAppend();
                 // some code goes here
+                Long fstRecordId = tidToFirstLogRecord.get(Long.valueOf(tid.getId()));
+                HashSet<PageId> resetPageIds = new HashSet<PageId>();
+                if (fstRecordId == null)
+                	return;
+                long previous = raf.getFilePointer();
+                this.raf.seek(fstRecordId.longValue());
+                long end = currentOffset == -1 ? raf.length():currentOffset;
+                while (raf.getFilePointer() < end)
+                {
+                	//this.print();
+                	int lType;
+                	long transId;
+                	lType = raf.readInt();
+                	transId = raf.readLong();
+                	switch(lType)
+                	{
+                	case UPDATE_RECORD:
+                		Page before = readPageData(raf);
+                		readPageData(raf);
+                		if (transId == tid.getId())
+                		{
+                			PageId pid = before.getId();
+                			if (!resetPageIds.contains(pid))
+                			{
+                				resetPageIds.add(pid);
+                				int tableId = pid.getTableId();
+                				DbFile toWriteFile = Database.getCatalog().getDatabaseFile(tableId);
+                				toWriteFile.writePage(before);
+                				Database.getBufferPool().discardPage(pid);
+                			}
+                		}
+                		break;
+                	case CHECKPOINT_RECORD:
+                		int numberOfCheckPoints = raf.readInt();
+                		for (int i = 0; i < numberOfCheckPoints; ++i)
+                		{
+                			raf.readLong();
+                			raf.readLong();
+                		}
+                		break;
+                	}
+                	raf.readLong();
+                }
+                raf.seek(previous);
             }
         }
     }
@@ -494,6 +538,7 @@ public class LogFile {
             synchronized (this) {
                 recoveryUndecided = false;
                 // some code goes here
+                
             }
          }
     }
@@ -501,6 +546,46 @@ public class LogFile {
     /** Print out a human readable represenation of the log */
     public void print() throws IOException {
         // some code goes here
+		long previousFilePointer = raf.getFilePointer();
+		raf.seek(LONG_SIZE);
+		long end = currentOffset == -1 ? raf.length() : currentOffset;
+		while (raf.getFilePointer() < end) {
+			int transactionType = raf.readInt();
+			long transactionId = raf.readLong();
+			switch (transactionType) {
+			case ABORT_RECORD:
+				System.out.println("ABORT " + transactionId);
+				break;
+			case BEGIN_RECORD:
+				System.out.println("BEGIN " + transactionId);
+				break;
+			case COMMIT_RECORD:
+				System.out.println("COMMIT " + transactionId);
+				break;
+			case UPDATE_RECORD:
+				Page before = readPageData(raf);
+				// Read after page; not used
+				readPageData(raf);
+				System.out.println("UPDATE " + transactionId + ", table: "
+						+ before.getId().getTableId() + ", page number: "
+						+ before.getId().pageNumber());
+				break;
+			case CHECKPOINT_RECORD:
+				System.out.println("CHECKPOINT");
+				int numberOfCheckpointedTransactions = raf.readInt();
+				for (int i = 0; i < numberOfCheckpointedTransactions; i++) {
+					// Read transaction data
+					raf.readLong();
+					raf.readLong();
+				}
+				break;
+			default:
+				System.out.println("unknown type? " + transactionType);
+			}
+			// offset of beginning of record
+			raf.readLong();
+		}
+		raf.seek(previousFilePointer);
     }
 
     public  synchronized void force() throws IOException {
