@@ -515,6 +515,60 @@ public class LogFile {
         }
     }
 
+    
+    private void rollback(long tid)
+            throws NoSuchElementException, IOException {
+            synchronized (Database.getBufferPool()) {
+                synchronized(this) {
+                    preAppend();
+                    // some code goes here
+                    Long fstRecordId = tidToFirstLogRecord.get(Long.valueOf(tid));
+                    HashSet<PageId> resetPageIds = new HashSet<PageId>();
+                    if (fstRecordId == null)
+                    	return;
+                    long previous = raf.getFilePointer();
+                    this.raf.seek(fstRecordId.longValue());
+                    long end = currentOffset == -1 ? raf.length():currentOffset;
+                    while (raf.getFilePointer() < end)
+                    {
+                    	//this.print();
+                    	int lType;
+                    	long transId;
+                    	lType = raf.readInt();
+                    	transId = raf.readLong();
+                    	switch(lType)
+                    	{
+                    	case UPDATE_RECORD:
+                    		Page before = readPageData(raf);
+                    		readPageData(raf);
+                    		if (transId == tid)
+                    		{
+                    			PageId pid = before.getId();
+                    			if (!resetPageIds.contains(pid))
+                    			{
+                    				resetPageIds.add(pid);
+                    				int tableId = pid.getTableId();
+                    				DbFile toWriteFile = Database.getCatalog().getDatabaseFile(tableId);
+                    				toWriteFile.writePage(before);
+                    				Database.getBufferPool().discardPage(pid);
+                    			}
+                    		}
+                    		break;
+                    	case CHECKPOINT_RECORD:
+                    		int numberOfCheckPoints = raf.readInt();
+                    		for (int i = 0; i < numberOfCheckPoints; ++i)
+                    		{
+                    			raf.readLong();
+                    			raf.readLong();
+                    		}
+                    		break;
+                    	}
+                    	raf.readLong();
+                    }
+                    raf.seek(previous);
+                }
+            }
+        }
     /** Shutdown the logging system, writing out whatever state
         is necessary so that start up can happen quickly (without
         extensive recovery.)
@@ -538,7 +592,59 @@ public class LogFile {
             synchronized (this) {
                 recoveryUndecided = false;
                 // some code goes here
+                Set<Long> activeTransactionIds = new HashSet<Long> ();
+                raf.seek(0);
+                long checkPointOffset = raf.readLong();
+                if (checkPointOffset >= 0)
+                {
+                	raf.seek(checkPointOffset);
+                	raf.readInt();
+                	raf.readLong();
+                	int numberOfActive = raf.readInt();
+                	for (int i = 0; i < numberOfActive; ++i)
+                	{
+                		long tid = raf.readLong();
+                		long fstRecord = raf.readLong();
+                		activeTransactionIds.add(Long.valueOf(tid));
+                		tidToFirstLogRecord.put(Long.valueOf(tid), Long.valueOf(fstRecord));
+                	}
+                	raf.readLong();
+                }
                 
+                while (raf.getFilePointer() < raf.length())
+                {
+                	long offset = raf.getFilePointer();
+                	int tType = raf.readInt();
+                	long  tId = raf.readLong();
+                	switch(tType)
+                	{
+                	case BEGIN_RECORD:
+                		tidToFirstLogRecord.put(Long.valueOf(tId), Long.valueOf(offset));
+                		activeTransactionIds.add(Long.valueOf(tId));
+                		break;
+                	case COMMIT_RECORD:
+                		activeTransactionIds.remove(Long.valueOf(tId));
+                		break;
+                	case ABORT_RECORD:
+                		rollback(tId);
+                		activeTransactionIds.remove(Long.valueOf(tId));
+                		break;
+                	case UPDATE_RECORD:
+                		readPageData(raf);
+                		Page after = readPageData(raf);
+                		PageId pid = after.getId();
+                		DbFile dbf= Database.getCatalog().getDatabaseFile(pid.getTableId());
+                		dbf.writePage(after);
+                		Database.getBufferPool().discardPage(pid);
+                		break;
+                	}
+                	raf.readLong();
+                }
+                currentOffset = raf.getFilePointer();
+                for (Long transId : activeTransactionIds)
+                {
+                	rollback(transId.longValue());
+                }
             }
          }
     }
