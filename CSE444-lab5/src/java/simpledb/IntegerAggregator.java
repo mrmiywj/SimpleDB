@@ -3,9 +3,9 @@ package simpledb;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import org.apache.log4j.xml.Log4jEntityResolver;
+//import org.apache.log4j.xml.Log4jEntityResolver;
 
-import com.sun.istack.internal.logging.Logger;
+//import com.sun.istack.internal.logging.Logger;
 
 /**
  * Knows how to compute some aggregate over a set of IntFields.
